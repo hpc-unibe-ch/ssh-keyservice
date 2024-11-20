@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if stage == "add" %}
+        <h2>Add New SSH Key</h2>
+        <p>Enter your public SSH key below to begin the verification process.</p>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="public_key" class="form-label">Public SSH Key</label>
+                {{ form.public_key(class="form-control", id="public_key", rows=4) }}
+                {% for error in form.public_key.errors %}
+                    <div class="text-danger mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <button type="submit" name="public_key_submit" class="btn btn-primary">Submit</button>
+        </form>
+    {% elif stage == "verify" %}
+        <h2>Verify Your SSH Key</h2>
+        <p>
+            Run the command below on your system to verify ownership of the provided key. Then paste the verification output below.
+        </p>
+
+        <div class="alert alert-info">
+            <strong>Verification Command:</strong>
+            <code>
+                echo '{{ session.get('challenge') }}' | ssh-keygen -Y sign -f id_test -n file
+            </code>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="challenge_response" class="form-label">Verification Output</label>
+                {{ form.challenge_response(class="form-control", id="challenge_response", rows=4) }}
+                {% for error in form.challenge_response.errors %}
+                    <div class="text-danger mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <button type="submit" name="challenge_response_submit" class="btn btn-primary">Verify</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
+
