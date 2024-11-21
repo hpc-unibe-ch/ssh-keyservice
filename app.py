@@ -1,3 +1,4 @@
+from os import walk
 import identity.web
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for, flash
@@ -8,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import app_config
 
-from forms import SSHKeyForm
+from forms import ChallengeResponeForm, SSHKeyForm
 
 import subprocess
 import sqlite3
@@ -97,19 +98,21 @@ def call_downstream_api():
     ).json()
     return render_template('display.html', result=api_result)
 
-@app.route("/manage_key", methods=["GET", "POST"])
-def manage_key():
+@app.route("/add_key", methods=["GET", "POST"])
+def add_key():
     user = auth.get_user()
     if not user:
         return redirect(url_for("login"))
 
-    # Create a form instance for handling both public key and challenge response
     form = SSHKeyForm()
 
-    if request.method == "POST":
+    if request.method == "POST" and form.validate():
         # Handle Public Key Submission
         if "public_key" in request.form:
             public_key = form.public_key.data
+            comment = form.comment.data
+
+            print(comment)
 
             # Strip comment from public key and keep only the key and type
             public_key = public_key.split(" ")[0] + " " + public_key.split(" ")[1]
@@ -123,20 +126,34 @@ def manage_key():
 
             # Store the challenge and public key in the session
             session["challenge"] = challenge
+            session["comment"] = comment
             session["public_key"] = public_key
 
-            #flash("Run the following command to verify your SSH key:", "info")
-            #flash(f"curl https://keyservice.domain.com/verify-key.sh | bash - {challenge}", "info")
-            #flash(f" echo '{challenge}' | ssh-keygen -Y sign -f id_test -n file", "info")
-
+            print("Got here")
             # Move to the verification stage
-            return render_template("manage_key.html", form=form, stage="verify")
+            #return render_template("manage_key.html", stage="verify")
+            # Redirect to the verification page
+            return redirect(url_for("verify_key"))
 
+    # Default stage: show public key input
+    stage = "add"
+    return render_template("manage_key.html", form=form, stage=stage, user=auth.get_user())
+
+@app.route("/verify_key", methods=["GET", "POST"])
+def verify_key():
+    user = auth.get_user()
+    if not user:
+        return redirect(url_for("login"))
+
+    form = ChallengeResponeForm()
+
+    if request.method == "POST": # and form.validate():
         # Handle Challenge Response Submission
-        elif "challenge_response" in request.form:
+        if "challenge_response" in request.form and form.validate():
             challenge_response = form.challenge_response.data
             public_key = session.get("public_key")
             challenge = session.get("challenge")
+            comment = session.get("comment")
 
             if not public_key or not challenge:
                 flash("Session expired or invalid data. Please try again.", "danger")
@@ -155,18 +172,21 @@ def manage_key():
                 return redirect(url_for("index"))
 
             # Add the SSH key
-            add_ssh_key(user["preferred_username"], public_key, "Test Key")
+
+            print("comment: ", comment)
+            add_ssh_key(user["preferred_username"], public_key, comment)
 
             # Clear session data
             session.pop("challenge", None)
             session.pop("public_key", None)
+            session.pop("comment", None)
 
             flash("SSH key added successfully!", "success")
             return redirect(url_for("index"))
 
     # Default stage: show public key input
-    stage = "add"
-    return render_template("manage_key.html", form=form, stage=stage)
+    stage = "verify"
+    return render_template("manage_key.html", form=form, stage=stage, user=auth.get_user())
 
 @app.route("/delete_key/<int:key_id>", methods=["POST"])
 def delete_key(key_id):

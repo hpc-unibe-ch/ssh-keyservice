@@ -15,6 +15,13 @@
                     <div class="text-danger mt-1">{{ error }}</div>
                 {% endfor %}
             </div>
+            <div class="mb-3">
+                <label for="comment" class="form-label">Add a comment to identify your key(optional)</label>
+                {{ form.comment(class="form-control", id="comment", rows=1) }}
+                {% for error in form.comment.errors %}
+                    <div class="text-danger mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
             <button type="submit" name="public_key_submit" class="btn btn-primary">Submit</button>
         </form>
     {% elif stage == "verify" %}

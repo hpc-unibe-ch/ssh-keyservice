@@ -14,7 +14,7 @@
     </li>
     {% endfor %}
 </ul>
-<a href="{{ url_for('manage_key') }}" class="btn btn-primary mt-3">Add New SSH Key</a>
+<a href="{{ url_for('add_key') }}" class="btn btn-primary mt-3">Add New SSH Key</a>
 
 <ul>
 {% if config.get("ENDPOINT") %}
