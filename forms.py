@@ -50,6 +50,7 @@ class SSHKeyForm(FlaskForm):
     comment = StringField("Comment", validators=[Optional(), Length(max=50)])
     submit = SubmitField("Submit")
 
+#TODO: Add a custom validator for the challenge response
 class ChallengeResponeForm(FlaskForm):
     challenge_response = TextAreaField("Challenge Response", validators=[DataRequired()])
     submit = SubmitField("Submit")

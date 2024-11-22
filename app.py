@@ -1,4 +1,3 @@
-from os import walk
 import identity.web
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for, flash
@@ -12,11 +11,13 @@ import app_config
 from forms import ChallengeResponeForm, SSHKeyForm
 
 import subprocess
-import sqlite3
 import secrets
 
-from DButils import add_user, add_ssh_key, user_exists, get_user_keys, delete_user_ssh_key
-
+import base64
+import hashlib
+from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
+from cryptography.hazmat.primitives.serialization import load_ssh_public_key, ssh
+from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 
 __version__ = "0.8.0"  # The version of this sample, for troubleshooting purpose
 
@@ -43,7 +44,6 @@ auth = identity.web.Auth(
     client_id=app.config["CLIENT_ID"],
     client_credential=app.config["CLIENT_SECRET"],
 )
-
 
 @app.route("/login")
 def login():
@@ -76,27 +76,33 @@ def index():
     if not auth.get_user():
         return redirect(url_for("login"))
 
-    user = auth.get_user()
-    print(user)
-    # Fetch the user's SSH keys from the database
-    add_user(user["preferred_username"])
-    keys = get_user_keys(user["preferred_username"])
-
-    return render_template('index.html', user=auth.get_user(), version=__version__, keys=keys)
-
-
-@app.route("/call_downstream_api")
-def call_downstream_api():
     token = auth.get_token_for_user(app_config.SCOPE)
     if "error" in token:
         return redirect(url_for("login"))
     # Use access token to call downstream api
-    api_result = requests.get(
-        app_config.ENDPOINT,
+    data = requests.get(
+        "http://localhost:8000/api/v1/users/me",
         headers={'Authorization': 'Bearer ' + token['access_token']},
         timeout=30,
-    ).json()
-    return render_template('display.html', result=api_result)
+    )
+    if data.status_code == 200:
+        data = data.json()
+        print(data)
+        keys = []
+        for key, value in data['ssh_keys'].items():
+            keys.append({
+                    'ssh_key': key,
+                    'fingerprint': get_ssh_key_fingerprint(key),
+                    'comment': value
+                    })
+
+    elif data.status_code == 404:
+        keys=[]
+    else:
+        flash("Error encountered during key retrieval.", "danger")
+        keys=[]
+
+    return render_template('index.html', user=auth.get_user(), version=__version__, keys=keys)
 
 @app.route("/add_key", methods=["GET", "POST"])
 def add_key():
@@ -112,13 +118,34 @@ def add_key():
             public_key = form.public_key.data
             comment = form.comment.data
 
-            print(comment)
-
             # Strip comment from public key and keep only the key and type
             public_key = public_key.split(" ")[0] + " " + public_key.split(" ")[1]
 
             if not public_key:
                 flash("Please provide a valid public SSH key.", "danger")
+                return render_template("manage_key.html", form=form, stage="add")
+
+            # Verify that the public key does not already exist
+            token = auth.get_token_for_user(app_config.SCOPE)
+            if "error" in token:
+                return redirect(url_for("login"))
+
+            response = requests.get(
+                f"http://localhost:8000/api/v1/users/me/id",
+                headers={'Authorization': 'Bearer ' + token['access_token']},
+                timeout=30,
+            ).json()
+            uid = response['id']
+
+            api_result = requests.get(
+                f"http://localhost:8000/api/v1/users/{uid}",
+                params={"ssh_key": public_key},
+                headers={'Authorization': 'Bearer ' + token['access_token']},
+                timeout=30,
+            )
+
+            if api_result.status_code == 200:
+                flash("The SSH key already exists.", "danger")
                 return render_template("manage_key.html", form=form, stage="add")
 
             # Generate a challenge
@@ -128,10 +155,8 @@ def add_key():
             session["challenge"] = challenge
             session["comment"] = comment
             session["public_key"] = public_key
+            session["uid"] = uid
 
-            print("Got here")
-            # Move to the verification stage
-            #return render_template("manage_key.html", stage="verify")
             # Redirect to the verification page
             return redirect(url_for("verify_key"))
 
@@ -147,59 +172,99 @@ def verify_key():
 
     form = ChallengeResponeForm()
 
-    if request.method == "POST": # and form.validate():
+    if request.method == "POST" and form.validate():
         # Handle Challenge Response Submission
         if "challenge_response" in request.form and form.validate():
             challenge_response = form.challenge_response.data
             public_key = session.get("public_key")
             challenge = session.get("challenge")
             comment = session.get("comment")
+            uid = session.get("uid")
 
             if not public_key or not challenge:
                 flash("Session expired or invalid data. Please try again.", "danger")
                 return redirect(url_for("manage_key"))
 
             # Verify the challenge response
-            if not verify_challenge_response(challenge=challenge, response=challenge_response, public_key=public_key):
-                flash("Challenge-response verification failed. Please try again.", "danger")
-                return render_template("manage_key.html", form=form, stage="verify")
-
-            # Save the SSH key in the database
-            user_record = user_exists(user["preferred_username"])
-            if not user_record:
-                # User record not created yet
-                flash("User record not found. Please contact support.", "danger")
-                return redirect(url_for("index"))
+            #if not verify_challenge_response(challenge=challenge, response=challenge_response, public_key=public_key):
+            #    flash("Challenge-response verification failed. Please try again.", "danger")
+            #    return render_template("manage_key.html", form=form, stage="verify")
 
             # Add the SSH key
-
             print("comment: ", comment)
-            add_ssh_key(user["preferred_username"], public_key, comment)
+            print("ssh_key: ", public_key)
+            token = auth.get_token_for_user(app_config.SCOPE)
+            if "error" in token:
+                return redirect(url_for("login"))
+
+            # Headers
+            headers = {
+                "Authorization": f"Bearer {token['access_token']}",
+            }
+
+            data = {
+                "ssh_key": public_key,
+                "comment": comment
+            }
+
+            url=f"http://localhost:8000/api/v1/users/{uid}"
+            r = requests.put(url, json=data, headers=headers)
 
             # Clear session data
             session.pop("challenge", None)
             session.pop("public_key", None)
             session.pop("comment", None)
+            session.pop("uid", None)
 
-            flash("SSH key added successfully!", "success")
-            return redirect(url_for("index"))
+            if r.status_code != 200:
+                flash("Error encountered during key addition.", "danger")
+                return redirect(url_for("index"))
+            else:
+                flash("SSH key added successfully!", "success")
+                return redirect(url_for("index"))
 
     # Default stage: show public key input
     stage = "verify"
     return render_template("manage_key.html", form=form, stage=stage, user=auth.get_user())
 
-@app.route("/delete_key/<int:key_id>", methods=["POST"])
-def delete_key(key_id):
+@app.route("/delete_key", methods=["POST"])
+def delete_key():
     user = auth.get_user()
     if not user:
         return redirect(url_for("login"))
 
+    public_key = request.args['public_key']
+
     # Delete the SSH key
-    delete_user_ssh_key(user["preferred_username"], key_id)
+    token = auth.get_token_for_user(app_config.SCOPE)
+    if "error" in token:
+        return redirect(url_for("login"))
 
-    flash("SSH key deleted successfully.", "success")
-    return redirect(url_for("index"))
+    response = requests.get(
+        f"http://localhost:8000/api/v1/users/me/id",
+        headers={'Authorization': 'Bearer ' + token['access_token']},
+        timeout=30,
+        ).json()
+    uid = response['id']
 
+    # Headers
+    headers = {
+        "Authorization": f"Bearer {token['access_token']}",
+    }
+
+    data = {
+        "ssh_key": public_key
+    }
+
+    url=f"http://localhost:8000/api/v1/users/{uid}"
+    r = requests.delete(url, json=data, headers=headers)
+
+    if r.status_code != 200:
+        flash("Error encountered during key deletion.", "danger")
+        return redirect(url_for("index"))
+    else:
+        flash("SSH key deleted successfully!", "success")
+        return redirect(url_for("index"))
 
 def generate_challenge():
     """Generate a random challenge string."""
@@ -237,6 +302,52 @@ def verify_challenge_response(challenge, response, public_key):
     except Exception as e:
         print(f"Error during verification: {e}")
         return False
+
+def validate_ssh_public_key(key_data):
+    """Check if the provided SSH key data is valid."""
+    try:
+        # Try to load the SSH key
+        load_ssh_public_key(key_data.encode('utf-8'))
+        return True
+    except (ValueError, UnsupportedAlgorithm, InvalidKey):
+        return False
+
+def get_ssh_key_fingerprint(key_data: str):
+    try:
+        # Check if the key is valid
+        if not validate_ssh_public_key(key_data):
+            return "Invalid SSH public key."
+
+        # Extract the base64-encoded key part
+        key_parts = key_data.split()
+        if len(key_parts) < 2:
+            return "Invalid SSH public key format."
+
+        key_type = key_parts[0]
+        key_base64 = key_parts[1]
+
+        # Decode the key
+        key_bytes = base64.b64decode(key_base64)
+
+        # Compute the fingerprint (SHA256 hash)
+        fingerprint = hashlib.sha256(key_bytes).digest()
+        fingerprint_base64 = base64.b64encode(fingerprint).decode()
+
+        # Load the key to determine its length
+        public_key = load_ssh_public_key(key_data.encode('utf-8'))
+        key_length = None
+
+        # Determine the key length based on the type
+        if isinstance(public_key, rsa.RSAPublicKey):
+            key_length = public_key.key_size
+        elif isinstance(public_key, ec.EllipticCurvePublicKey):
+            key_length = public_key.curve.key_size
+        elif isinstance(public_key, ed25519.Ed25519PublicKey):
+            key_length = 256
+
+        return f"{key_type} - SHA256:{fingerprint_base64} ({key_length}-bit)"
+    except Exception as e:
+        return f"Error: {e}"
 
 
 if __name__ == "__main__":

@@ -38,7 +38,8 @@ ENDPOINT = 'https://graph.microsoft.com/v1.0/me'  # This resource requires no ad
 
 # You can find the proper permission names from this document
 # https://docs.microsoft.com/en-us/graph/permissions-reference
-SCOPE = ["User.Read"]
+#SCOPE = ["User.Read"]
+SCOPE = ["api://e22c3299-6681-458a-a255-ce282d8304cb/user.read.profile"]
 
 # Tells the Flask-session extension to store sessions in the filesystem
 SESSION_TYPE = "filesystem"
@@ -51,6 +52,6 @@ SESSION_TYPE = "filesystem"
 # [2] https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html
 # [3] https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#configure-general-settings
 
-SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
-SQLALCHEMY_TRACK_MODIFICATIONS = False
+#SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
+#SQLALCHEMY_TRACK_MODIFICATIONS = False
 

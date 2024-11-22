@@ -140,3 +140,92 @@ footer p {
     color: #f8f9fa !important;
 }
 
+.key-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.key-table th,
+.key-table td {
+    border: 1px solid #ccc;
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.key-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.key-comment {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.key-fingerprint {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: red;
+    font-size: 16px;
+    padding: 0;
+}
+
+.delete-button:hover {
+    color: darkred;
+}
+
+.styled-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+}
+.styled-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 12px 15px;
+    vertical-align: center;
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.styled-table tbody tr.active-row {
+    font-weight: bold;
+    color: #009879;
+}
+
+.button-container {
+    display: flex;
+    justify-content: right; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 10vh; /* Or any height to center within a specific area */
+}
+
+
+
