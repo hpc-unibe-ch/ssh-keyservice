@@ -1,23 +1,25 @@
+#!/usr/bin/env python3
+import base64
+import hashlib
+
 import identity.web
 import requests
-from flask import Flask, redirect, render_template, request, session, url_for, flash
+import subprocess
+import secrets
+
+from flask import Flask, redirect, render_template, request, session, url_for, flash, send_from_directory
 from flask_session import Session
 from flask_wtf import CSRFProtect
+
+from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
+from cryptography.hazmat.primitives.serialization import load_ssh_public_key, ssh
+from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
+
+from forms import ChallengeResponeForm, SSHKeyForm
 
 from dotenv import load_dotenv
 load_dotenv()
 import app_config
-
-from forms import ChallengeResponeForm, SSHKeyForm
-
-import subprocess
-import secrets
-
-import base64
-import hashlib
-from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
-from cryptography.hazmat.primitives.serialization import load_ssh_public_key, ssh
-from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 
 __version__ = "0.8.0"  # The version of this sample, for troubleshooting purpose
 

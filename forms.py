@@ -1,11 +1,12 @@
+import re
+
 from flask_wtf import FlaskForm
+
 from wtforms import TextAreaField, StringField, SubmitField, ValidationError
 from wtforms.validators import DataRequired, Optional, Length
 
 from cryptography.hazmat.primitives.serialization import load_ssh_public_key
 from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
-
-import re
 
 def validate_ssh_public_key(form, field):
     """
