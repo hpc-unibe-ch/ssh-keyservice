@@ -12,7 +12,7 @@ from flask_session import Session
 from flask_wtf import CSRFProtect
 
 from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
-from cryptography.hazmat.primitives.serialization import load_ssh_public_key, ssh
+from cryptography.hazmat.primitives.serialization import load_ssh_public_key
 from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 
 from forms import ChallengeResponeForm, SSHKeyForm
@@ -83,7 +83,7 @@ def index():
         return redirect(url_for("login"))
     # Use access token to call downstream api
     data = requests.get(
-        "http://localhost:8000/api/v1/users/me",
+        app_config.API_ENDPOINT + "/users/me",
         headers={'Authorization': 'Bearer ' + token['access_token']},
         timeout=30,
     )
@@ -120,12 +120,13 @@ def add_key():
             public_key = form.public_key.data
             comment = form.comment.data
 
-            # Strip comment from public key and keep only the key and type
-            public_key = public_key.split(" ")[0] + " " + public_key.split(" ")[1]
-
             if not public_key:
                 flash("Please provide a valid public SSH key.", "danger")
                 return render_template("manage_key.html", form=form, stage="add")
+
+            # Strip comment from public key and keep only the key and type
+            public_key = public_key.split(" ")[0] + " " + public_key.split(" ")[1]
+
 
             # Verify that the public key does not already exist
             token = auth.get_token_for_user(app_config.SCOPE)
@@ -133,14 +134,14 @@ def add_key():
                 return redirect(url_for("login"))
 
             response = requests.get(
-                f"http://localhost:8000/api/v1/users/me/id",
+                app_config.API_ENDPOINT + "/users/me/id",
                 headers={'Authorization': 'Bearer ' + token['access_token']},
                 timeout=30,
             ).json()
             uid = response['id']
 
             api_result = requests.get(
-                f"http://localhost:8000/api/v1/users/{uid}",
+                app_config.API_ENDPOINT + f"/users/{uid}",
                 params={"ssh_key": public_key},
                 headers={'Authorization': 'Bearer ' + token['access_token']},
                 timeout=30,
@@ -188,9 +189,9 @@ def verify_key():
                 return redirect(url_for("manage_key"))
 
             # Verify the challenge response
-            #if not verify_challenge_response(challenge=challenge, response=challenge_response, public_key=public_key):
-            #    flash("Challenge-response verification failed. Please try again.", "danger")
-            #    return render_template("manage_key.html", form=form, stage="verify")
+            if not verify_challenge_response(challenge=challenge, response=challenge_response, public_key=public_key):
+                flash("Challenge-response verification failed. Please try again.", "danger")
+                return render_template("manage_key.html", form=form, stage="verify")
 
             # Add the SSH key
             print("comment: ", comment)
@@ -209,7 +210,7 @@ def verify_key():
                 "comment": comment
             }
 
-            url=f"http://localhost:8000/api/v1/users/{uid}"
+            url = app_config.API_ENDPOINT + f"/users/{uid}"
             r = requests.put(url, json=data, headers=headers)
 
             # Clear session data
@@ -243,7 +244,7 @@ def delete_key():
         return redirect(url_for("login"))
 
     response = requests.get(
-        f"http://localhost:8000/api/v1/users/me/id",
+        app_config.API_ENDPOINT + "/users/me/id",
         headers={'Authorization': 'Bearer ' + token['access_token']},
         timeout=30,
         ).json()
@@ -258,7 +259,7 @@ def delete_key():
         "ssh_key": public_key
     }
 
-    url=f"http://localhost:8000/api/v1/users/{uid}"
+    url = app_config.API_ENDPOINT + f"/users/{uid}"
     r = requests.delete(url, json=data, headers=headers)
 
     if r.status_code != 200:

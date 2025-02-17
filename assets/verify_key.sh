@@ -64,7 +64,7 @@ if [ ! -f "$private_key_path" ]; then
 fi
 
 # Sign the challenge using ssh-keygen
-response=$(echo -n "$challenge" | ssh-keygen -Y sign -f "$private_key_path" -n ssh-connection 2>/dev/null)
+response=$(echo "$challenge" | ssh-keygen -Y sign -f "$private_key_path" -n file 2>/dev/null)
 if [ $? -ne 0 ]; then
     error_exit "Failed to sign the challenge with the private key"
 fi
