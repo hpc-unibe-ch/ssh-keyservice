@@ -211,7 +211,7 @@ def verify_key():
             }
 
             url = app_config.API_ENDPOINT + f"/users/{uid}"
-            r = requests.put(url, json=data, headers=headers)
+            r = requests.put(url, json=data, headers=headers, timeout=10)
 
             # Clear session data
             session.pop("challenge", None)
@@ -246,7 +246,7 @@ def delete_key():
     response = requests.get(
         app_config.API_ENDPOINT + "/users/me/id",
         headers={'Authorization': 'Bearer ' + token['access_token']},
-        timeout=30,
+        timeout=10,
         ).json()
     uid = response['id']
 
@@ -260,7 +260,7 @@ def delete_key():
     }
 
     url = app_config.API_ENDPOINT + f"/users/{uid}"
-    r = requests.delete(url, json=data, headers=headers)
+    r = requests.delete(url, json=data, headers=headers, timeout=10)
 
     if r.status_code != 200:
         flash("Error encountered during key deletion.", "danger")
@@ -290,7 +290,7 @@ def verify_challenge_response(challenge, response, public_key):
         # Use ssh-keygen to verify the response
         # ssh-keygen -Y verify -f allowed_signers.tmp -I keyservice@localhost -n file -s signature
         result = subprocess.run(
-            ["ssh-keygen", "-Y", "verify", "-f", "allowed_signers.tmp", "-I", "keyservice@localhost", "-n", "file", "-s", "response.tmp"],
+            ["/bin/ssh-keygen", "-Y", "verify", "-f", "allowed_signers.tmp", "-I", "keyservice@localhost", "-n", "file", "-s", "response.tmp"],
             input=challenge,
             text=True,
             check=True,
@@ -298,7 +298,7 @@ def verify_challenge_response(challenge, response, public_key):
         )
 
         # Clean up temporary files
-        subprocess.run(["rm", "allowed_signers.tmp", "response.tmp"])
+        subprocess.run(["/bin/rm", "allowed_signers.tmp", "response.tmp"])
 
         # Check the result
         return result.returncode == 0
