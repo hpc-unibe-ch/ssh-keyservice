@@ -308,7 +308,6 @@ def verify_challenge_response(challenge, response, public_key):
 def validate_ssh_public_key(key_data):
     """Check if the provided SSH key data is valid."""
     try:
-        # Try to load the SSH key
         load_ssh_public_key(key_data.encode('utf-8'))
         return True
     except (ValueError, UnsupportedAlgorithm, InvalidKey):
@@ -350,6 +349,11 @@ def get_ssh_key_fingerprint(key_data: str):
         return f"{key_type} - SHA256:{fingerprint_base64} ({key_length}-bit)"
     except Exception as e:
         return f"Error: {e}"
+
+@app.route("/verify_key.sh")
+def serve_script():
+    # Serve the `verify_key.sh` script
+    return send_from_directory("assets/", "verify_key.sh", as_attachment=False)
 
 
 if __name__ == "__main__":

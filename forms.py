@@ -21,7 +21,7 @@ def validate_ssh_public_key(form, field):
     """
     ssh_key_pattern = re.compile(
         r'^(ssh-(rsa|dss|ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)) '  # key type
-        r'[A-Za-z0-9+/=]+(?: [A-Za-z0-9+@/=]+)*$'
+        r'[A-Za-z0-9+/=]+(?: [A-Za-z0-9+@.\-/=]+)*$'
     )
 
     # Strip the input
