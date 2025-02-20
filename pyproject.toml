@@ -21,7 +21,11 @@ redis = "^5.2.1"
 azure-identity = "^1.20.0"
 azure-keyvault-secrets = "^4.9.0"
 azure-monitor-opentelemetry = "^1.6.5"
+gunicorn = "^23.0.0"
 
+[tool.poetry-auto-export]
+output = "requirements.txt"
+without_hashes = true
 
 [build-system]
 requires = ["poetry-core"]

@@ -23,12 +23,12 @@ from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 
 from azure.monitor.opentelemetry import configure_azure_monitor
 
-from forms import ChallengeResponeForm, SSHKeyForm
+from .forms import ChallengeResponeForm, SSHKeyForm
 
 #from dotenv import load_dotenv
 #load_dotenv()
 
-import app_config
+from . import app_config
 
 # Setup logger and Azure Monitor:
 logger = logging.getLogger("ssh_keyservice")
@@ -113,7 +113,6 @@ def index():
     )
     if data.status_code == 200:
         data = data.json()
-        print(data)
         keys = []
         for key, value in data['ssh_keys'].items():
             keys.append({
@@ -220,8 +219,6 @@ def verify_key():
                 return render_template("manage_key.html", form=form, stage="verify")
 
             # Add the SSH key
-            print("comment: ", comment)
-            print("ssh_key: ", public_key)
             token = auth.get_token_for_user(app_config.SCOPE)
             if "error" in token:
                 return redirect(url_for("login"))
