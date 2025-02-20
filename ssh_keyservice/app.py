@@ -1,25 +1,40 @@
 #!/usr/bin/env python3
+import os
 import base64
 import hashlib
+import logging
 
 import identity.web
 import requests
 import subprocess
 import secrets
 
+from datetime import datetime
+
 from flask import Flask, redirect, render_template, request, session, url_for, flash, send_from_directory
 from flask_session import Session
 from flask_wtf import CSRFProtect
+#from flask_limiter import Limiter
+#from flask_limiter.util import get_remote_address
 
 from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
 from cryptography.hazmat.primitives.serialization import load_ssh_public_key
 from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 
+from azure.monitor.opentelemetry import configure_azure_monitor
+
 from forms import ChallengeResponeForm, SSHKeyForm
 
-from dotenv import load_dotenv
-load_dotenv()
+#from dotenv import load_dotenv
+#load_dotenv()
+
 import app_config
+
+# Setup logger and Azure Monitor:
+logger = logging.getLogger("ssh_keyservice")
+logger.setLevel(logging.INFO)
+if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+    configure_azure_monitor()
 
 __version__ = "0.8.0"  # The version of this sample, for troubleshooting purpose
 
@@ -27,6 +42,15 @@ app = Flask(__name__)
 app.config.from_object(app_config)
 assert app.config["REDIRECT_PATH"] != "/", "REDIRECT_PATH must not be /"
 Session(app)
+
+#limiter = Limiter(
+#  get_remote_address,
+#  app=app,
+#  default_limits=["200 per day", "50 per hour"],
+#  storage_uri="redis://" + app_config.LIMITS_DB_HOST + ":" + str(app_config.LIMITS_DB_PORT),
+#  storage_options={"socket_connect_timeout": 30},
+#  strategy="fixed-window", # or "moving-window"
+#)
 
 app.secret_key = secrets.token_urlsafe(32)
 csrf = CSRFProtect(app)
@@ -95,7 +119,8 @@ def index():
             keys.append({
                     'ssh_key': key,
                     'fingerprint': get_ssh_key_fingerprint(key),
-                    'comment': value
+                    'comment': value['comment'],
+                    'timestamp': f'(added on {datetime.fromisoformat(value['timestamp']).strftime("%B %m, %Y")})'
                     })
 
     elif data.status_code == 404:
@@ -133,21 +158,24 @@ def add_key():
             if "error" in token:
                 return redirect(url_for("login"))
 
-            response = requests.get(
-                app_config.API_ENDPOINT + "/users/me/id",
-                headers={'Authorization': 'Bearer ' + token['access_token']},
-                timeout=30,
-            ).json()
-            uid = response['id']
-
-            api_result = requests.get(
-                app_config.API_ENDPOINT + f"/users/{uid}",
-                params={"ssh_key": public_key},
+            data = requests.get(
+                app_config.API_ENDPOINT + "/users/me",
                 headers={'Authorization': 'Bearer ' + token['access_token']},
                 timeout=30,
             )
+            if data.status_code == 200:
+                data = data.json()
+                keys = []
+                for key, _ in data['ssh_keys'].items():
+                    keys.append(key)
 
-            if api_result.status_code == 200:
+            elif data.status_code == 404:
+                keys=[]
+            else:
+                flash("Error encountered during key retrieval.", "danger")
+                keys=[]
+
+            if public_key in keys:
                 flash("The SSH key already exists.", "danger")
                 return render_template("manage_key.html", form=form, stage="add")
 
@@ -158,7 +186,6 @@ def add_key():
             session["challenge"] = challenge
             session["comment"] = comment
             session["public_key"] = public_key
-            session["uid"] = uid
 
             # Redirect to the verification page
             return redirect(url_for("verify_key"))
@@ -182,7 +209,6 @@ def verify_key():
             public_key = session.get("public_key")
             challenge = session.get("challenge")
             comment = session.get("comment")
-            uid = session.get("uid")
 
             if not public_key or not challenge:
                 flash("Session expired or invalid data. Please try again.", "danger")
@@ -210,14 +236,13 @@ def verify_key():
                 "comment": comment
             }
 
-            url = app_config.API_ENDPOINT + f"/users/{uid}"
+            url = app_config.API_ENDPOINT + f"/users/me/keys"
             r = requests.put(url, json=data, headers=headers, timeout=10)
 
             # Clear session data
             session.pop("challenge", None)
             session.pop("public_key", None)
             session.pop("comment", None)
-            session.pop("uid", None)
 
             if r.status_code != 200:
                 flash("Error encountered during key addition.", "danger")
@@ -243,13 +268,6 @@ def delete_key():
     if "error" in token:
         return redirect(url_for("login"))
 
-    response = requests.get(
-        app_config.API_ENDPOINT + "/users/me/id",
-        headers={'Authorization': 'Bearer ' + token['access_token']},
-        timeout=10,
-        ).json()
-    uid = response['id']
-
     # Headers
     headers = {
         "Authorization": f"Bearer {token['access_token']}",
@@ -259,7 +277,7 @@ def delete_key():
         "ssh_key": public_key
     }
 
-    url = app_config.API_ENDPOINT + f"/users/{uid}"
+    url = app_config.API_ENDPOINT + f"/users/me/keys"
     r = requests.delete(url, json=data, headers=headers, timeout=10)
 
     if r.status_code != 200:
@@ -290,7 +308,7 @@ def verify_challenge_response(challenge, response, public_key):
         # Use ssh-keygen to verify the response
         # ssh-keygen -Y verify -f allowed_signers.tmp -I keyservice@localhost -n file -s signature
         result = subprocess.run(
-            ["/bin/ssh-keygen", "-Y", "verify", "-f", "allowed_signers.tmp", "-I", "keyservice@localhost", "-n", "file", "-s", "response.tmp"],
+            ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", "allowed_signers.tmp", "-I", "keyservice@localhost", "-n", "file", "-s", "response.tmp"],
             input=challenge,
             text=True,
             check=True,

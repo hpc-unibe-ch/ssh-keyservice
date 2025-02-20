@@ -1,13 +1,31 @@
 import os
 
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+
+# Configure Azure Key Vault
+KEY_VAULT_URL = os.getenv("AZURE_KEY_VAULT_URL", "https://your-keyvault-name.vault.azure.net")
+credential = DefaultAzureCredential()
+client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
+
+def get_secret(secret_name: str) -> str:
+    try:
+        return client.get_secret(secret_name).value
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving secret {secret_name}: {str(e)}")
+
 # Configure your authority via environment variable
 # Defaults to a multi-tenant app in world-wide cloud
-AUTHORITY = os.getenv("AUTHORITY") or "https://login.microsoftonline.com/common"
+TENANT_ID = get_secret("TENANT-ID")
+AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+#AUTHORITY = os.getenv("AUTHORITY") or "https://login.microsoftonline.com/common"
 
 # Application (client) ID of app registration
-CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_ID = get_secret("APP-CLIENT-ID")
+#CLIENT_ID = os.getenv("CLIENT_ID")
 # Application's generated client secret: never check this into source control!
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+CLIENT_SECRET = get_secret("APP-CLIENT-SECRET")
+#CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 REDIRECT_PATH = "/getAToken"  # Used for forming an absolute URL to your redirect URI.
 # The absolute URL must match the redirect URI you set
@@ -23,8 +41,12 @@ api_client_id = CLIENT_ID or ""
 SCOPE = ["api://" + api_client_id + "/user.read.profile"]
 
 # API URLs
-API_BASE_URL = os.getenv("API_BASE_URL") or "http://localhost:8000"
+API_BASE_URL = os.getenv("AZURE_API_BASE_URL") or "http://localhost:8000"
 API_ENDPOINT = API_BASE_URL + "/api/v1"
+
+# Flask rate limiting settings
+#LIMITS_DB_HOST = os.getenv("LIMITS_DB_HOST") or "localhost"
+#LIMITS_DB_PORT = os.getenv("LIMITS_DB_PORT") or 6379
 
 # Tells the Flask-session extension to store sessions in the filesystem
 SESSION_TYPE = "filesystem"

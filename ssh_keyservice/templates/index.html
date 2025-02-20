@@ -23,6 +23,7 @@
             <td>
                 <div class="key-comment">{{ key.comment }}</div>
                 <div class="key-fingerprint">{{ key.fingerprint }}</div>
+                <div class="key-fingerprint">{{ key.timestamp }}</div>
             </td>
             <td>
                 <form action="{{ url_for('delete_key', public_key=key.ssh_key) }}" method="POST" style="display:inline;">
