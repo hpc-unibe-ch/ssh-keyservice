@@ -318,7 +318,7 @@ def verify_challenge_response(challenge, response, public_key):
         # Check the result
         return result.returncode == 0
     except Exception as e:
-        print(f"Error during verification: {e}")
+        logger.error(f"Error during verification: {e}")
         return False
 
 def validate_ssh_public_key(key_data):
