@@ -293,6 +293,10 @@ def verify_challenge_response(challenge, response, public_key):
     Verifies the challenge response using the provided public key.
     """
     try:
+        # Normalize line endings and encode the response
+        byte_str = response.encode("UTF-8")
+        byte_str = byte_str.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+        response = byte_str.decode("UTF-8")
 
         # Create a temporary file to store the public key and response
         with tempfile.NamedTemporaryFile(mode="w", prefix="tmp_allowed_signers",
