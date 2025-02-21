@@ -54,9 +54,7 @@ Session(app)
 #  strategy="fixed-window", # or "moving-window"
 #)
 
-app.secret_key = secrets.token_urlsafe(32)
 csrf = CSRFProtect(app)
-csrf.init_app(app)
 
 # This section is needed for url_for("foo", _external=True) to automatically
 # generate http scheme when this sample is running on localhost,

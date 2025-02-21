@@ -58,3 +58,6 @@ SESSION_TYPE = "filesystem"
 # [1] https://www.imperva.com/learn/availability/sticky-session-persistence-and-cookies/
 # [2] https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html
 # [3] https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#configure-general-settings
+
+# Flask secret key
+SECRET_KEY = get_secret("FLASK-SECRET-KEY")
