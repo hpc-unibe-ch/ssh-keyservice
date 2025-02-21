@@ -15,4 +15,3 @@ if os.getenv("WEBSITE_SKU") == "LinuxFree":
     workers = 1
 else:
     workers = (num_cpus * 2) + 1
-worker_class = "ssh_keyservice.custom_uvicorn_worker.CustomUvicornWorker"
