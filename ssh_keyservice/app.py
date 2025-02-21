@@ -9,6 +9,8 @@ import requests
 import subprocess
 import secrets
 
+import tempfile
+
 from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for, flash, send_from_directory
@@ -294,32 +296,38 @@ def verify_challenge_response(challenge, response, public_key):
     """
     try:
 
-        # Write the public key and response to temporary files
-        with open("allowed_signers.tmp", "w") as pub_file, open("response.tmp", "w") as resp_file:
-            pub_file.write("keyservice@localhost" + " " + public_key)
-            resp_file.write(response)
+        # Create a temporary file to store the public key and response
+        with tempfile.NamedTemporaryFile(mode="w", prefix="tmp_allowed_signers",
+                                         newline='\n', delete_on_close=False) as f_allowed_signers, \
+             tempfile.NamedTemporaryFile(mode="w", prefix='tmp_response', newline='\n', delete_on_close=False) as f_response:
 
-        # Add newline to the challenge
-        challenge += "\n"
+            f_allowed_signers.write("keyservice@localhost" + " " + public_key)
+            f_allowed_signers.close()
 
-        # Use ssh-keygen to verify the response
-        # ssh-keygen -Y verify -f allowed_signers.tmp -I keyservice@localhost -n file -s signature
-        result = subprocess.run(
-            ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", "allowed_signers.tmp", "-I", "keyservice@localhost", "-n", "file", "-s", "response.tmp"],
-            input=challenge,
-            text=True,
-            check=True,
-            capture_output=True
-        )
+            f_response.write(response)
+            f_response.close()
 
-        # Clean up temporary files
-        subprocess.run(["/bin/rm", "allowed_signers.tmp", "response.tmp"])
+            challenge += "\n" # Ensure the challenge ends with a newline
+
+            # Execute ssh-keygen to verify the response
+            result = subprocess.run(
+                ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", f_allowed_signers.name , "-I", "keyservice@localhost", "-n", "file", "-s", f_response.name],
+                input=challenge,
+                text=True,
+                capture_output=True
+            )
+
+        logger.info(f"ssh-keygen output: {result.stdout}")
+        if result.stderr:
+            logger.warning(f"ssh-keygen error: {result.stderr}")
 
         # Check the result
         return result.returncode == 0
+    except subprocess.SubprocessError as e:
+        logger.error(f"Subprocess execution failed: {e}")
     except Exception as e:
-        logger.error(f"Error during verification: {e}")
-        return False
+        logger.exception("Unexpected error during challenge verification.")
+    return False
 
 def validate_ssh_public_key(key_data):
     """Check if the provided SSH key data is valid."""
