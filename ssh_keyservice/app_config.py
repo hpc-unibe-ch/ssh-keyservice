@@ -3,6 +3,8 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
+from cachelib.file import FileSystemCache
+
 # Configure Azure Key Vault
 KEY_VAULT_URL = os.getenv("AZURE_KEY_VAULT_URL", "https://your-keyvault-name.vault.azure.net")
 credential = DefaultAzureCredential()
@@ -49,7 +51,7 @@ API_ENDPOINT = API_BASE_URL + "/api/v1"
 #LIMITS_DB_PORT = os.getenv("LIMITS_DB_PORT") or 6379
 
 # Tells the Flask-session extension to store sessions in the filesystem
-SESSION_TYPE = "filesystem"
+SESSION_TYPE = "cachelib"
 # In production, your setup may use multiple web servers behind a load balancer,
 # and the subsequent requests may not be routed to the same web server.
 # In that case, you may either use a centralized database-backed session store,
@@ -58,6 +60,8 @@ SESSION_TYPE = "filesystem"
 # [1] https://www.imperva.com/learn/availability/sticky-session-persistence-and-cookies/
 # [2] https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html
 # [3] https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#configure-general-settings
+SESSION_SERIALIZATION_FORMAT = 'json'
+SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="flask_session")
 
 # Flask secret key
 SECRET_KEY = get_secret("FLASK-SECRET-KEY")
