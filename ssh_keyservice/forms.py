@@ -45,14 +45,60 @@ def validate_ssh_public_key(form, field):
     except (ValueError, UnsupportedAlgorithm, InvalidKey):
         raise ValidationError('Invalid SSH public key string.')
 
+def validate_ssh_comment(form, field):
+    """
+    Custom validator to check if the input is a valid SSH comment string.
+
+    Args:
+        form: The form containing the field.
+        field: The field to validate.
+
+    Raises:
+        ValidationError: If the input is not a valid SSH comment.
+    """
+    comment_pattern = re.compile(r'^[A-Za-z0-9@.\-/ ]+$')
+
+    # Strip the input
+    comment = field.data.strip()
+
+    # Check if the input matches the pattern
+    if not comment_pattern.match(comment):
+        raise ValidationError('Invalid SSH comment string pattern. Only alphanumeric characters, @, ., -, and / are allowed.')
+
+def validate_challenge_response(form, field):
+    """
+    Custom validator to check if the input is a valid challenge response string.
+
+    Args:
+        form: The form containing the field.
+        field: The field to validate.
+
+    Raises:
+        ValidationError: If the input is not a valid challenge response.
+    """
+    challenge_response_pattern = re.compile(
+            r"""
+            ^-----BEGIN\ SSH\ SIGNATURE-----\n
+            ([A-Za-z0-9+/=\n]+)
+            \n?
+            -----END\ SSH\ SIGNATURE-----$
+            """, re.MULTILINE | re.VERBOSE
+            )
+
+    # Strip the input
+    challenge_response = field.data.strip()
+    challenge_response = challenge_response.replace("\r\n", "\n")
+
+    # Check if the input matches the pattern
+    if not challenge_response_pattern.fullmatch(challenge_response):
+        raise ValidationError('Invalid challenge response string pattern. Must be a valid SSH signature.')
 
 class SSHKeyForm(FlaskForm):
     public_key = TextAreaField("SSH Public Key", validators=[DataRequired(), validate_ssh_public_key])
-    comment = StringField("Comment", validators=[Optional(), Length(max=50)])
+    comment = StringField("Comment", validators=[Optional(), Length(max=50), validate_ssh_comment])
     submit = SubmitField("Submit")
 
-#TODO: Add a custom validator for the challenge response
 class ChallengeResponeForm(FlaskForm):
-    challenge_response = TextAreaField("Challenge Response", validators=[DataRequired()])
+    challenge_response = TextAreaField("Challenge Response", validators=[DataRequired(), validate_challenge_response])
     submit = SubmitField("Submit")
 

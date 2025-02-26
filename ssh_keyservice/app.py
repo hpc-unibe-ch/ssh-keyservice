@@ -151,6 +151,9 @@ def add_key():
             # Strip comment from public key and keep only the key and type
             public_key = public_key.split(" ")[0] + " " + public_key.split(" ")[1]
 
+            # Strip the comment field
+            if comment:
+                comment = comment.strip()
 
             # Verify that the public key does not already exist
             token = auth.get_token_for_user(app_config.SCOPE)
