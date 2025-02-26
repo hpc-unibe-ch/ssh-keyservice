@@ -177,6 +177,9 @@ def add_key():
             if public_key in keys:
                 flash("The SSH key already exists.", "danger")
                 return render_template("manage_key.html", form=form, stage="add")
+            if len(keys) >= 5:
+                flash("You have reached the maximum number of SSH keys per user.", "danger")
+                return redirect(url_for("index"))
 
             # Generate a challenge
             challenge = generate_challenge()
