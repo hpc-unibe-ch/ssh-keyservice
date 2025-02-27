@@ -105,6 +105,12 @@ def index():
     token = auth.get_token_for_user(app_config.SCOPE)
     if "error" in token:
         return redirect(url_for("login"))
+
+    # Ensure that the session is clean
+    session.pop("challenge", None)
+    session.pop("public_key", None)
+    session.pop("comment", None)
+
     # Use access token to call downstream api
     data = requests.get(
         app_config.API_ENDPOINT + "/users/me",
@@ -137,6 +143,11 @@ def add_key():
         return redirect(url_for("login"))
 
     form = SSHKeyForm()
+
+    if request.method == "GET":
+        session.pop("challenge", None)
+        session.pop("public_key", None)
+        session.pop("comment", None)
 
     if request.method == "POST" and form.validate():
         # Handle Public Key Submission
@@ -204,6 +215,9 @@ def verify_key():
     user = auth.get_user()
     if not user:
         return redirect(url_for("login"))
+
+    if not session.get("public_key") or not session.get("challenge"):
+        return redirect(url_for("index"))
 
     form = ChallengeResponeForm()
 
