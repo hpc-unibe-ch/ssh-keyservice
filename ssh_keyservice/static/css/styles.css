@@ -31,9 +31,27 @@ body, html {
     color: #ffc107; /* Highlight color */
 }
 
+.nav-tabs .nav-link {
+    color: #343a40; /* Dark gray text */
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #f8f9fa; /* White text */
+    background-color: #009879;
+}
+
 /* Flash Messages */
 .alert-container {
     margin-top: 20px;
+}
+
+.alert-info {
+    background-color: #dff2ee; /* Light green background */
+    border-color: #009879;
+    color: #0c5460; /* Dark blue text */
+    /* No shadow */
+    box-shadow: none;
+    margin-top: -5px;
 }
 
 .alert {

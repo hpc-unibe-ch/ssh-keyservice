@@ -329,22 +329,23 @@ def verify_challenge_response(challenge, response, public_key):
             f_response.write(response)
             f_response.close()
 
-            challenge += "\n" # Ensure the challenge ends with a newline
+            # Try using both Unix and Windows line endings
+            for candidate, client_os in [(challenge + "\n", "unix"), (challenge + "\r\n", "windows")]:
+                # Execute ssh-keygen to verify the response
+                result = subprocess.run(
+                    ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", f_allowed_signers.name , "-I", "keyservice@localhost", "-n", "file", "-s", f_response.name],
+                    input=candidate,
+                    text=True,
+                    capture_output=True
+                )
+                logger.info(f"ssh-keygen output: {result.stdout} ({client_os})")
+                if result.stderr:
+                    logger.warning(f"ssh-keygen error: {result.stderr} ({client_os})")
 
-            # Execute ssh-keygen to verify the response
-            result = subprocess.run(
-                ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", f_allowed_signers.name , "-I", "keyservice@localhost", "-n", "file", "-s", f_response.name],
-                input=challenge,
-                text=True,
-                capture_output=True
-            )
+                if result.returncode == 0:
+                    return True
 
-        logger.info(f"ssh-keygen output: {result.stdout}")
-        if result.stderr:
-            logger.warning(f"ssh-keygen error: {result.stderr}")
-
-        # Check the result
-        return result.returncode == 0
+        return False
     except subprocess.SubprocessError as e:
         logger.error(f"Subprocess execution failed: {e}")
     except Exception as e:
@@ -400,7 +401,6 @@ def get_ssh_key_fingerprint(key_data: str):
 def serve_script():
     # Serve the `verify_key.sh` script
     return send_from_directory("assets/", "verify_key.sh", as_attachment=False)
-
 
 if __name__ == "__main__":
     app.run()
