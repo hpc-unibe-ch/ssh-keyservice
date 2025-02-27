@@ -58,6 +58,9 @@ else
     fi
 fi
 
+# Manually expand the tilde in the private key path
+private_key_path="${private_key_path/#\~/$HOME}"
+
 # Validate the selected private key file
 if [ ! -f "$private_key_path" ]; then
     error_exit "Private key file not found after validation: $private_key_path"
