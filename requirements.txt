@@ -16,7 +16,7 @@ cffi==1.17.1 ; python_version >= "3.11" and python_version < "4.0" and platform_
 charset-normalizer==3.4.1 ; python_version >= "3.11" and python_version < "4.0"
 click==8.1.8 ; python_version >= "3.11" and python_version < "4.0"
 colorama==0.4.6 ; python_version >= "3.11" and python_version < "4.0" and platform_system == "Windows"
-cryptography==44.0.1 ; python_version >= "3.11" and python_version < "4.0"
+cryptography==44.0.2 ; python_version >= "3.11" and python_version < "4.0"
 deprecated==1.2.18 ; python_version >= "3.11" and python_version < "4.0"
 fixedint==0.1.6 ; python_version >= "3.11" and python_version < "4.0"
 flask-limiter==3.10.1 ; python_version >= "3.11" and python_version < "4.0"
