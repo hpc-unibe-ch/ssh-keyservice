@@ -54,7 +54,7 @@ opentelemetry-instrumentation-urllib==0.52b0 ; python_version >= "3.11" and pyth
 opentelemetry-instrumentation-wsgi==0.52b0 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation==0.52b0 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-resource-detector-azure==0.1.5 ; python_version >= "3.11" and python_version < "4.0"
-opentelemetry-sdk==1.31.0 ; python_version >= "3.11" and python_version < "4.0"
+opentelemetry-sdk==1.31.1 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-semantic-conventions==0.52b0 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-util-http==0.52b0 ; python_version >= "3.11" and python_version < "4.0"
 ordered-set==4.1.0 ; python_version >= "3.11" and python_version < "4.0"
