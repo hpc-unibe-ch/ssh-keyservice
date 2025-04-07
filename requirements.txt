@@ -4,7 +4,7 @@
 asgiref==3.8.1 ; python_version >= "3.11" and python_version < "4.0"
 async-timeout==5.0.1 ; python_version >= "3.11" and python_full_version < "3.11.3"
 azure-core-tracing-opentelemetry==1.0.0b12 ; python_version >= "3.11" and python_version < "4.0"
-azure-core==1.32.0 ; python_version >= "3.11" and python_version < "4.0"
+azure-core==1.33.0 ; python_version >= "3.11" and python_version < "4.0"
 azure-identity==1.21.0 ; python_version >= "3.11" and python_version < "4.0"
 azure-keyvault-secrets==4.9.0 ; python_version >= "3.11" and python_version < "4.0"
 azure-monitor-opentelemetry-exporter==1.0.0b35 ; python_version >= "3.11" and python_version < "4.0"
