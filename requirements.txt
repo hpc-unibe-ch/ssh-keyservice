@@ -48,7 +48,7 @@ opentelemetry-instrumentation-django==0.52b1 ; python_version >= "3.11" and pyth
 opentelemetry-instrumentation-fastapi==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation-flask==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation-psycopg2==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
-opentelemetry-instrumentation-requests==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
+opentelemetry-instrumentation-requests==0.54b0 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation-urllib3==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation-urllib==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
 opentelemetry-instrumentation-wsgi==0.52b1 ; python_version >= "3.11" and python_version < "4.0"
