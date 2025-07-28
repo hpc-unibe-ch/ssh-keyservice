@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry export --format requirements.txt --output requirements.txt
+          python -m poetry export --format requirements.txt --output requirements.txt
 
       - name: Create and start virtual environment
         run: |
