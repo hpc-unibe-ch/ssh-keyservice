@@ -36,6 +36,7 @@ jobs:
         run: python -m poetry run pytest -v -s
   build:
     runs-on: ubuntu-latest
+    needs: test
     permissions:
       contents: read #This is required for actions/checkout
 
