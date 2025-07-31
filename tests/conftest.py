@@ -12,7 +12,6 @@ def patch_get_secret():
             print(f"[MOCK] get_secret({name}) → {mocked}")
             return mocked
         mock_secret.side_effect = secret_side_effect
-        #mock_secret.side_effect = lambda name: f"mocked_{name.lower().replace('-', '_')}"
         yield
 
 @pytest.fixture
@@ -30,9 +29,3 @@ def app():
 def client(app):
     """Create a test client for the Flask app."""
     return app.test_client()
-
-@pytest.fixture
-def runner(app):
-    """Create a CLI runner for Flask app (if needed)."""
-    return app.test_cli_runner()
-

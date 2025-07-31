@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ssh_keyservice/app.py
 
 import os
 import logging

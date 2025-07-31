@@ -36,7 +36,7 @@ def validate_ssh_public_key(form, field):
     # Additional validation for the base64 part
     key_parts = key.split()
     if len(key_parts) < 2:
-        raise ValidationError('SSH public key is incomplete.')
+        raise ValidationError('Invalid SSH public key format.')
 
     try:
         # Try to load the SSH key

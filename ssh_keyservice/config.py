@@ -48,6 +48,7 @@ def load_config():
         # [2] https://azure.github.io/AppService/2016/05/16/Disable-Session-affinity-cookie-(ARR-cookie)-for-Azure-web-apps.html
         # [3] https://learn.microsoft.com/en-us/azure/app-service/configure-common?tabs=portal#configure-general-settings
         "SESSION_TYPE": "cachelib",
+        "SESSION_PERMANENT": False,
         "SESSION_SERIALIZATION_FORMAT": 'json',
         "SESSION_CACHELIB": FileSystemCache(threshold=500, cache_dir="flask_session")
     }
