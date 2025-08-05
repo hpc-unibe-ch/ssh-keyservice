@@ -86,20 +86,20 @@ typing-extensions = ">=4.0.0"
 
 [[package]]
 name = "azure-keyvault-secrets"
-version = "4.9.0"
-description = "Microsoft Azure Key Vault Secrets Client Library for Python"
+version = "4.10.0"
+description = "Microsoft Corporation Key Vault Secrets Client Library for Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_keyvault_secrets-4.9.0-py3-none-any.whl", hash = "sha256:33c7e2aca2cc2092cebc8c6e96eca36a5cc30c767e16ea429c5fa21270e9fba6"},
-    {file = "azure_keyvault_secrets-4.9.0.tar.gz", hash = "sha256:2a03bb2ffd9a0d6c8ad1c330d9d0310113985a9de06607ece378fd72a5889fe1"},
+    {file = "azure_keyvault_secrets-4.10.0-py3-none-any.whl", hash = "sha256:9dbde256077a4ee1a847646671580692e3f9bea36bcfc189c3cf2b9a94eb38b9"},
+    {file = "azure_keyvault_secrets-4.10.0.tar.gz", hash = "sha256:666fa42892f9cee749563e551a90f060435ab878977c95265173a8246d546a36"},
 ]
 
 [package.dependencies]
 azure-core = ">=1.31.0"
 isodate = ">=0.6.1"
-typing-extensions = ">=4.0.1"
+typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-monitor-opentelemetry"
@@ -1751,4 +1751,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8e0d508f55d043009f21a984e368b604de6cc8cc0b288e6c602c318cb9855409"
+content-hash = "5a8354661e16bc60f832085cbcc99d28050e93adf6b05e196d47ca86394a7f57"
