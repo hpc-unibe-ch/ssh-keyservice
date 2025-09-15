@@ -67,14 +67,14 @@ opentelemetry-api = ">=1.12.0"
 
 [[package]]
 name = "azure-identity"
-version = "1.21.0"
+version = "1.25.0"
 description = "Microsoft Azure Identity Library for Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_identity-1.21.0-py3-none-any.whl", hash = "sha256:258ea6325537352440f71b35c3dffe9d240eae4a5126c1b7ce5efd5766bd9fd9"},
-    {file = "azure_identity-1.21.0.tar.gz", hash = "sha256:ea22ce6e6b0f429bc1b8d9212d5b9f9877bd4c82f1724bfa910760612c07a9a6"},
+    {file = "azure_identity-1.25.0-py3-none-any.whl", hash = "sha256:becaec086bbdf8d1a6aa4fb080c2772a0f824a97d50c29637ec8cc4933f1e82d"},
+    {file = "azure_identity-1.25.0.tar.gz", hash = "sha256:4177df34d684cddc026e6cf684e1abb57767aa9d84e7f2129b080ec45eee7733"},
 ]
 
 [package.dependencies]
@@ -1751,4 +1751,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "8f92b60cb95f86eb9912e36c7763aac9dad5f72747b8748dd82ce40f74af2c1d"
+content-hash = "62fcbd144d03c4d1809053c0910fa6b83da66f715cf3c3e6272d93b345b7e48a"
