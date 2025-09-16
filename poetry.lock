@@ -629,14 +629,14 @@ license = ["ukkonen"]
 
 [[package]]
 name = "identity"
-version = "0.9.2"
+version = "0.11.0"
 description = "This is an authentication/authorization library, currently optimized for web apps. It provides some higher level APIs built on top of Microsoft's MSAL Python."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "identity-0.9.2-py3-none-any.whl", hash = "sha256:aa43aa0b802b50523e65e81550c860490d0c2c42c328821b8ea4be94450826be"},
-    {file = "identity-0.9.2.tar.gz", hash = "sha256:bd1808efa349d2150aa50d63823a2db89d0f6dc777d31ce5cb0f73c41ae12d73"},
+    {file = "identity-0.11.0-py3-none-any.whl", hash = "sha256:6d6917effa94db96ce14fec7e8d8f3d5a4aad0c6db7a02d5310b27b1a5f02a0b"},
+    {file = "identity-0.11.0.tar.gz", hash = "sha256:d6900bd918dff0a6253941eb667cbb725a8123e8fa214d555862858fa094cd05"},
 ]
 
 [package.dependencies]
@@ -1754,4 +1754,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "4533c89ffa87579d1a012e3dc00dfc32e280274e7cf3d02373ee4ca9ac799bc8"
+content-hash = "2f3b2cc1a08d4cc6891288700995da805c70cd6440894405337f96cc67285eb5"
