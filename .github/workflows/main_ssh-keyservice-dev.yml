@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - ssh-keyservice-dev
 on:
   push:
     branches:
-      - main
+      - 60-add-terraform-support
   workflow_dispatch:
 
 jobs:
@@ -98,9 +98,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_17EA239D1E0044279CBC27D4767DEB62 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_29579562CC144F5AB13A6BFB1AF06FFE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D9104CA405574AAF9B81FA0E294A018A }}
+          client-id: ${{ secrets.TEST_CLIENTID }}
+          tenant-id: ${{ secrets.TEST_TENANTID }}
+          subscription-id: ${{ secrets.TEST_SUBSCRIPTIONID }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
