@@ -106,6 +106,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'ssh-keyservice-dev'
+          app-name: 'ssh-keyservice-web-prod'
           slot-name: 'Production'
 
