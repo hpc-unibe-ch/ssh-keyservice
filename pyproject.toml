@@ -22,7 +22,7 @@ azure-identity = "^1.25.1"
 azure-keyvault-secrets = "^4.10.0"
 azure-monitor-opentelemetry = "^1.8.3"
 gunicorn = "^23.0.0"
-uvicorn = "^0.38.0"
+uvicorn = "^0.40.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.0.2"
