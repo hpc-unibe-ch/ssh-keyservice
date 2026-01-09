@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Activate the venv
+source "$SCRIPT_DIR/../ssh_keyservice/.venv/bin/activate"
+
+# Run python from the activated venv
+exec python "$@"
+

@@ -75,7 +75,7 @@ def register_routes(app):
                         'ssh_key': key,
                         'fingerprint': get_ssh_key_fingerprint(key),
                         'comment': value['comment'],
-                        'timestamp': f'(added on {datetime.fromisoformat(value['timestamp']).strftime("%B %d, %Y")})'
+                        'timestamp': f"(added on {datetime.fromisoformat(value['timestamp']).strftime('%B %d, %Y')})"
                         })
 
         elif data.status_code == 404:
