@@ -1,17 +1,20 @@
 # SSH Keyservice
 
-A flask web app for centralised management of SSH Keys protected through OpenID Connect.
+A flask web app for centralised management of SSH Keys designed for OpenOnDemand environments.
 Users manage their SSH keys via a web portal - similar to GitHub - instead of traditionally in `~/.ssh/authorised_keys`.
 On servers connected to the keyservice, the `sshd` server performs an API query using `AuthorisedKeysCommand` to retrieve the keys stored by the user. The API returns a raw response in the same format as GitHub keys.
 
-## Authentication Modes
+## Authentication
 
-This application supports two authentication modes:
+This application is designed to run in OpenOnDemand environments where authentication is handled externally by the OpenOnDemand platform. The application reads OIDC tokens from a file on the web server and uses them to authenticate API requests.
 
-1. **Azure OIDC Mode** (default) - Uses Microsoft Azure Active Directory for authentication
-2. **OpenOnDemand Mode** - Uses pre-authenticated OIDC tokens from files (for OpenOnDemand environments)
+### Configuration
 
-See [OPENONDEMAND.md](OPENONDEMAND.md) for detailed configuration instructions for running in OpenOnDemand environments.
+Set the following environment variables:
+
+- `OIDC_TOKEN_PATH` - Path to the OIDC token file (default: `/var/run/secrets/oidc/token`)
+- `API_BASE_URL` - Base URL for the backend API (default: `http://localhost:8000`)
+- `FLASK_SECRET_KEY` - Flask secret key for session management (auto-generated if not set)
 
 ## Background
 Traditionally, users generate an SSH key and transfer the public key to a server using `ssh-copy-id` or `scp`. This process usually only requires a password or an already stored key for authentication. This approach harbours some security risks:
@@ -19,7 +22,7 @@ Traditionally, users generate an SSH key and transfer the public key to a server
 - If the file with the stored keys is inadvertently inadequately protected, third parties could add their own keys without authorisation and thus gain access.
 
 This app is designed to address these problems. A secure web front end allows users to manage their SSH keys, while additional security mechanisms prevent misuse:
-- Possibility to enforce multi-factor authentication (MFA) when accessing the keyservice frontend. This significantly increases security.
+- Authentication is handled by OpenOnDemand platform with MFA support
 - Challenge-response verification to ensure that users actually have the complete key pair (private and public key) before the key is accepted.
 
 ## Repositories

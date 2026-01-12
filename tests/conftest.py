@@ -1,18 +1,26 @@
 import pytest
+import tempfile
+import os
 from unittest.mock import patch
-import ssh_keyservice.config as config
 from ssh_keyservice.app import create_app
 
 @pytest.fixture(autouse=True)
-def patch_get_secret():
-    """Automatically mock get_secret() in all tests."""
-    with patch.object(config, "get_secret") as mock_secret:
-        def secret_side_effect(name):
-            mocked = f"mocked_{name.lower().replace('-', '_')}"
-            print(f"[MOCK] get_secret({name}) → {mocked}")
-            return mocked
-        mock_secret.side_effect = secret_side_effect
-        yield
+def mock_oidc_token():
+    """Automatically create a mock OIDC token file for all tests."""
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.token') as f:
+        f.write("test_oidc_token_12345")
+        f.flush()
+        token_path = f.name
+    
+    # Set environment variable to use the test token
+    with patch.dict(os.environ, {"OIDC_TOKEN_PATH": token_path}):
+        yield token_path
+    
+    # Cleanup
+    try:
+        os.unlink(token_path)
+    except:
+        pass
 
 @pytest.fixture
 def app():

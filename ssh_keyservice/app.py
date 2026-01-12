@@ -6,7 +6,6 @@ from flask import Flask
 from flask_session import Session
 from flask_wtf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
-from azure.monitor.opentelemetry import configure_azure_monitor
 
 from .config import load_config
 from .routes import register_routes
@@ -15,13 +14,16 @@ def create_app():
     logger = logging.getLogger("ssh_keyservice")
     logger.setLevel(logging.INFO)
 
+    # Optional: Configure Azure Monitor if connection string is provided
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-        configure_azure_monitor()
+        try:
+            from azure.monitor.opentelemetry import configure_azure_monitor
+            configure_azure_monitor()
+        except ImportError:
+            logger.warning("Azure Monitor OpenTelemetry not available")
 
     app = Flask(__name__)
     app.config.from_mapping(load_config())
-
-    assert app.config["REDIRECT_PATH"] != "/", "REDIRECT_PATH must not be /"
 
     Session(app)
     CSRFProtect(app)
