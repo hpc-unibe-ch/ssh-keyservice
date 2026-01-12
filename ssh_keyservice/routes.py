@@ -26,14 +26,21 @@ def register_routes(app):
         app.auth = None
 
     def get_user_openondemand():
-        """Get user information when in OpenOnDemand mode."""
+        """Get user information when in OpenOnDemand mode.
+        
+        In OpenOnDemand mode, user authentication is handled externally by the
+        OpenOnDemand platform. The actual user identity is extracted and validated
+        by the backend API when it receives the OIDC token. This function returns
+        a minimal user object for frontend session management only.
+        """
         # In OpenOnDemand mode, user info comes from the OIDC token
-        # For now, we'll use a placeholder. The API will validate the token.
+        # The API will validate the token and extract the actual user information
         token = read_oidc_token(app.config["OIDC_TOKEN_PATH"])
         if token:
             # Store token in session for subsequent requests
             session['oidc_token'] = token
-            # Return a minimal user object
+            # Return a minimal user object for session management
+            # The backend API will extract and validate the actual user from the token
             return {'name': 'OpenOnDemand User', 'preferred_username': 'ood_user'}
         return None
 
@@ -100,7 +107,7 @@ def register_routes(app):
                 print(f"[TEST] Missing CLIENT_ID or CLIENT_SECRET in config. Skipping authentication.")
                 return render_template('config_error.html')
             if not app.auth.get_user():
-                print   (f"[TEST] User not authenticated. Redirecting to login.")
+                print(f"[TEST] User not authenticated. Redirecting to login.")
                 return redirect(url_for("login"))
 
             user = app.auth.get_user()
