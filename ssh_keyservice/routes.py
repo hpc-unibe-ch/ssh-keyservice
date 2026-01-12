@@ -5,21 +5,53 @@ from datetime import datetime
 from flask import redirect, render_template, request, session, url_for, flash, send_from_directory
 
 from .forms import ChallengeResponeForm, SSHKeyForm
-from .utils import generate_challenge, verify_challenge_response, validate_ssh_public_key, get_ssh_key_fingerprint
+from .utils import generate_challenge, verify_challenge_response, validate_ssh_public_key, get_ssh_key_fingerprint, read_oidc_token
 
 __version__ = "0.8.0"  # The version of this sample, for troubleshooting purpose
 
 def register_routes(app):
-    app.jinja_env.globals.update(Auth=identity.web.Auth)  # Useful in template for B2C
-    app.auth = identity.web.Auth(
-        session=session,
-        authority=app.config["AUTHORITY"],
-        client_id=app.config["CLIENT_ID"],
-        client_credential=app.config["CLIENT_SECRET"],
-    )
+    use_openondemand = app.config.get("USE_OPENONDEMAND", False)
+    
+    if not use_openondemand:
+        # Azure OIDC mode: set up identity.web.Auth
+        app.jinja_env.globals.update(Auth=identity.web.Auth)  # Useful in template for B2C
+        app.auth = identity.web.Auth(
+            session=session,
+            authority=app.config["AUTHORITY"],
+            client_id=app.config["CLIENT_ID"],
+            client_credential=app.config["CLIENT_SECRET"],
+        )
+    else:
+        # OpenOnDemand mode: no identity.web.Auth needed
+        app.auth = None
+
+    def get_user_openondemand():
+        """Get user information when in OpenOnDemand mode."""
+        # In OpenOnDemand mode, user info comes from the OIDC token
+        # For now, we'll use a placeholder. The API will validate the token.
+        token = read_oidc_token(app.config["OIDC_TOKEN_PATH"])
+        if token:
+            # Store token in session for subsequent requests
+            session['oidc_token'] = token
+            # Return a minimal user object
+            return {'name': 'OpenOnDemand User', 'preferred_username': 'ood_user'}
+        return None
+
+    def get_token_openondemand():
+        """Get access token when in OpenOnDemand mode."""
+        token = session.get('oidc_token') or read_oidc_token(app.config["OIDC_TOKEN_PATH"])
+        if token:
+            session['oidc_token'] = token
+            return {'access_token': token}
+        return {'error': 'no_token'}
 
     @app.route("/login")
     def login():
+        if use_openondemand:
+            # In OpenOnDemand mode, redirect directly to index
+            # Authentication is handled by OpenOnDemand
+            return redirect(url_for("index"))
+        
         return render_template("login.html", version=__version__, **app.auth.log_in(
             scopes=app.config["SCOPE"], # Have user consent to scopes during log-in
             redirect_uri=url_for("auth_response", _external=True), # Optional. If present, this absolute URL must match your app's redirect_uri registered in Azure Portal
@@ -29,6 +61,10 @@ def register_routes(app):
 
     @app.route(app.config["REDIRECT_PATH"])
     def auth_response():
+        if use_openondemand:
+            # In OpenOnDemand mode, redirect to index
+            return redirect(url_for("index"))
+        
         result = app.auth.complete_log_in(request.args)
         if "error" in result:
             return render_template("auth_error.html", result=result)
@@ -37,24 +73,41 @@ def register_routes(app):
 
     @app.route("/logout")
     def logout():
+        if use_openondemand:
+            # In OpenOnDemand mode, just clear the session
+            session.clear()
+            return redirect(url_for("index"))
+        
         return redirect(app.auth.log_out(url_for("index", _external=True)))
 
 
     @app.route("/")
     def index():
-        if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
-            # This check is not strictly necessary.
-            # You can remove this check from your production code.
-            print(f"[TEST] Missing CLIENT_ID or CLIENT_SECRET in config. Skipping authentication.")
-            return render_template('config_error.html')
-        if not app.auth.get_user():
-            print   (f"[TEST] User not authenticated. Redirecting to login.")
-            return redirect(url_for("login"))
+        if use_openondemand:
+            # OpenOnDemand mode
+            user = get_user_openondemand()
+            if not user:
+                return render_template('config_error.html', error="OIDC token not found or invalid")
+            
+            token = get_token_openondemand()
+            if "error" in token:
+                return render_template('config_error.html', error="Unable to read OIDC token")
+        else:
+            # Azure OIDC mode
+            if not (app.config["CLIENT_ID"] and app.config["CLIENT_SECRET"]):
+                # This check is not strictly necessary.
+                # You can remove this check from your production code.
+                print(f"[TEST] Missing CLIENT_ID or CLIENT_SECRET in config. Skipping authentication.")
+                return render_template('config_error.html')
+            if not app.auth.get_user():
+                print   (f"[TEST] User not authenticated. Redirecting to login.")
+                return redirect(url_for("login"))
 
-        token = app.auth.get_token_for_user(app.config["SCOPE"])
-        if "error" in token:
-            print(f"[TEST] Error retrieving token: {token['error']}. Redirecting to login.")
-            return redirect(url_for("login"))
+            user = app.auth.get_user()
+            token = app.auth.get_token_for_user(app.config["SCOPE"])
+            if "error" in token:
+                print(f"[TEST] Error retrieving token: {token['error']}. Redirecting to login.")
+                return redirect(url_for("login"))
 
         # Ensure that the session is clean
         session.pop("challenge", None)
@@ -84,11 +137,15 @@ def register_routes(app):
             flash("Error encountered during key retrieval.", "danger")
             keys=[]
 
-        return render_template('index.html', user=app.auth.get_user(), version=__version__, keys=keys)
+        return render_template('index.html', user=user, version=__version__, keys=keys)
 
     @app.route("/add_key", methods=["GET", "POST"])
     def add_key():
-        user = app.auth.get_user()
+        if use_openondemand:
+            user = get_user_openondemand()
+        else:
+            user = app.auth.get_user()
+        
         if not user:
             return redirect(url_for("login"))
 
@@ -117,7 +174,11 @@ def register_routes(app):
                     comment = comment.strip()
 
                 # Verify that the public key does not already exist
-                token = app.auth.get_token_for_user(app.config["SCOPE"])
+                if use_openondemand:
+                    token = get_token_openondemand()
+                else:
+                    token = app.auth.get_token_for_user(app.config["SCOPE"])
+                
                 if "error" in token:
                     return redirect(url_for("login"))
 
@@ -158,11 +219,15 @@ def register_routes(app):
 
         # Default stage: show public key input
         stage = "add"
-        return render_template("manage_key.html", form=form, stage=stage, user=app.auth.get_user())
+        return render_template("manage_key.html", form=form, stage=stage, user=user)
 
     @app.route("/verify_key", methods=["GET", "POST"])
     def verify_key():
-        user = app.auth.get_user()
+        if use_openondemand:
+            user = get_user_openondemand()
+        else:
+            user = app.auth.get_user()
+        
         if not user:
             return redirect(url_for("login"))
 
@@ -189,7 +254,11 @@ def register_routes(app):
                     return render_template("manage_key.html", form=form, stage="verify")
 
                 # Add the SSH key
-                token = app.auth.get_token_for_user(app.config["SCOPE"])
+                if use_openondemand:
+                    token = get_token_openondemand()
+                else:
+                    token = app.auth.get_token_for_user(app.config["SCOPE"])
+                
                 if "error" in token:
                     return redirect(url_for("login"))
 
@@ -220,18 +289,26 @@ def register_routes(app):
 
         # Default stage: show public key input
         stage = "verify"
-        return render_template("manage_key.html", form=form, stage=stage, user=app.auth.get_user())
+        return render_template("manage_key.html", form=form, stage=stage, user=user)
 
     @app.route("/delete_key", methods=["POST"])
     def delete_key():
-        user = app.auth.get_user()
+        if use_openondemand:
+            user = get_user_openondemand()
+        else:
+            user = app.auth.get_user()
+        
         if not user:
             return redirect(url_for("login"))
 
         public_key = request.args['public_key']
 
         # Delete the SSH key
-        token = app.auth.get_token_for_user(app.config["SCOPE"])
+        if use_openondemand:
+            token = get_token_openondemand()
+        else:
+            token = app.auth.get_token_for_user(app.config["SCOPE"])
+        
         if "error" in token:
             return redirect(url_for("login"))
 

@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import os
 
 import subprocess
 import secrets
@@ -13,6 +14,31 @@ from cryptography.exceptions import UnsupportedAlgorithm, InvalidKey
 import logging
 
 logger = logging.getLogger("ssh_keyservice")
+
+def read_oidc_token(token_path):
+    """
+    Read OIDC token from file.
+    
+    Args:
+        token_path: Path to the file containing the OIDC token
+        
+    Returns:
+        The token string or None if file cannot be read
+    """
+    try:
+        if not os.path.exists(token_path):
+            logger.error(f"OIDC token file not found at {token_path}")
+            return None
+            
+        with open(token_path, 'r') as f:
+            token = f.read().strip()
+            if not token:
+                logger.error(f"OIDC token file at {token_path} is empty")
+                return None
+            return token
+    except Exception as e:
+        logger.error(f"Error reading OIDC token from {token_path}: {e}")
+        return None
 
 def generate_challenge():
     """Generate a random challenge string."""
