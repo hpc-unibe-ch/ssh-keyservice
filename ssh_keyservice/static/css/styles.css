@@ -13,8 +13,7 @@ body, html {
 
 /* Navbar */
 .navbar {
-    background-color: #343a40; /* Dark background */
-    border-bottom: 2px solid #ffc107; /* Add a highlight border */
+    background-color: #D6002B; /* Dark background */
 }
 
 .navbar-brand {
@@ -134,8 +133,6 @@ form {
 
 /* Footer */
 footer {
-    background-color: #343a40;
-    color: #f8f9fa;
     text-align: center;
     padding: 15px 0;
     position: relative;
@@ -244,6 +241,3 @@ footer p {
     align-items: center; /* Center vertically */
     height: 10vh; /* Or any height to center within a specific area */
 }
-
-
-
