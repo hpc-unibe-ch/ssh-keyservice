@@ -27,7 +27,7 @@ body, html {
 }
 
 .nav-link:hover {
-    color: #ffc107; /* Highlight color */
+    color: #c6c6c6; /* Highlight color */
 }
 
 .nav-tabs .nav-link {
