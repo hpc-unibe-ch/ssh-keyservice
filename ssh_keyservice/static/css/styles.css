@@ -10,7 +10,6 @@ body, html {
     grid-template-rows: auto 1fr auto;
 }
 
-
 /* Navbar */
 .navbar {
     background-color: #343a40; /* Dark background */
