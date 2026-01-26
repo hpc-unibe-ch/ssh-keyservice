@@ -124,7 +124,7 @@ class TestLoadConfig:
             secret_map = {
                 'AUTHORITY': 'https://login.microsoftonline.com/mocked_tenant_id',
                 'TENANT-ID': 'secret_tenant_id',
-                'APP-CLIENT-ID': 'test-client-id-12345',
+                'FRONTEND-APP-CLIENT-ID': 'test-client-id-12345',
             }
             return secret_map.get(key, f'default_{key}')
         
