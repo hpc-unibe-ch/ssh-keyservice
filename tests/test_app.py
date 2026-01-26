@@ -8,7 +8,7 @@ class TestAppConfiguration:
     
     def test_app_config(self, app):
         """Test that the app is configured correctly."""
-        assert app.config["CLIENT_ID"] == "mocked_app_client_id"
+        assert app.config["CLIENT_ID"] == "mocked_frontend_app_client_id"
         assert app.config["SECRET_KEY"].startswith("mocked_")
         assert app.config["TESTING"] is True
         assert app.config["WTF_CSRF_ENABLED"] is False
