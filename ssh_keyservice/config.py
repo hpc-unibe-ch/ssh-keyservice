@@ -16,8 +16,8 @@ def get_secret(secret_name: str) -> str:
 
 def load_config():
     tenant_id = get_secret("TENANT-ID")
-    client_id = get_secret("APP-CLIENT-ID")
-    client_secret = get_secret("APP-CLIENT-SECRET")
+    client_id = get_secret("FRONTEND-APP-CLIENT-ID")
+    client_secret = get_secret("FRONTEND-APP-CLIENT-SECRET")
     secret_key = get_secret("FLASK-SECRET-KEY")
 
     authority = f"https://login.microsoftonline.com/{tenant_id}"
