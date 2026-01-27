@@ -61,6 +61,14 @@ def register_routes(app):
         session.pop("public_key", None)
         session.pop("comment", None)
 
+
+        url = app.config["API_ENDPOINT"] + "/users/me"
+        app.logger.info("Calling API GET %s", url)
+        resp = requests.get(url, headers={...}, timeout=30)
+        app.logger.info("DEBUG API response: %s %s", resp.status_code, resp.text)
+
+
+
         # Use access token to call downstream api
         data = requests.get(
             app.config["API_ENDPOINT"] + "/users/me",
